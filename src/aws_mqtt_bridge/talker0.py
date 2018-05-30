@@ -31,6 +31,25 @@ class Cloudclass():
 		self.distance_traveled = data.state.distance_traveled
 
 
+		message = {}
+		#print(self.voltage_input)
+		message['voltage_input'] = self.voltage_input
+		message['temperature_pcb'] = self.temperature_pcb
+		message['current_motor'] = self.current_motor
+		message['current_input'] = self.current_input
+		message['speed'] = self.speed
+		message['duty_cycle'] = self.duty_cycle
+		message['charge_drawn'] = self.charge_drawn
+		message['charge_regen'] = self.charge_regen
+		message['energy_drawn'] = self.energy_drawn
+		message['energy_regen'] = self.energy_regen
+		message['displacement'] = self.displacement
+		message['distance_traveled'] = self.distance_traveled
+		self.msg.payload = json.dumps(message)
+		rospy.loginfo(rospy.get_caller_id() + " Send %s to %s" % (self.msg.payload, self.msg.topic))
+
+		self.pub.publish(self.msg)
+
 	def cloudAPI(self):
 		self.voltage_input = 0
 		self.temperature_pcb = 0
@@ -45,16 +64,18 @@ class Cloudclass():
 		self.displacement = 0
 		self.distance_traveled = 0
 		#Publisher(TOPICNAME,MESSAGETYPE,QUE) TOPICNAME is STATIC
-		pub = rospy.Publisher('publish_to_aws', MQTT_publish, queue_size=10)
+		self.pub = rospy.Publisher('publish_to_aws', MQTT_publish, queue_size=10)
 		#init_node(NODENAME, add random extenstion)
 		rospy.init_node('cloudAPI', anonymous=True)
 
 		rospy.Subscriber("vesc/sensors/core", VescStateStamped, self.callback)
 
 		rate = rospy.Rate(2) # #Rate(frequency)
-		msg = MQTT_publish() #Set the message type
-		msg.topic = "RCcar/dashboard" #Set the AWS IoT Topic name
+		self.msg = MQTT_publish() #Set the message type
+		self.msg.topic = "RCcar/dashboard" #Set the AWS IoT Topic name
 
+		#spin() simply keeps python from exiting until this node is stopped
+		rospy.spin()
 
 		###########################################################################
 		#attributes_GPS = ['IMU_GPSLongetude', 'IMU_GPSLatetude[deg]','IMU_speedSpeed_IMU']
@@ -65,29 +86,12 @@ class Cloudclass():
 		#initialvalue = 0
 		###########################################################################
 
-		while not rospy.is_shutdown():
-			message = {}
-			#print(self.voltage_input)
-			message['voltage_input'] = self.voltage_input
-			message['temperature_pcb'] = self.temperature_pcb
-			message['current_motor'] = self.current_motor
-			message['current_input'] = self.current_input
-			message['speed'] = self.speed
-			message['duty_cycle'] = self.duty_cycle
-			message['charge_drawn'] = self.charge_drawn
-			message['charge_regen'] = self.charge_regen
-			message['energy_drawn'] = self.energy_drawn
-			message['energy_regen'] = self.energy_regen
-			message['displacement'] = self.displacement
-			message['distance_traveled'] = self.distance_traveled
-			msg.payload = json.dumps(message)
-			rospy.loginfo(rospy.get_caller_id() + " Send %s to %s" % (msg.payload, msg.topic))
+		#while not rospy.is_shutdown():
 
 			#initialvalue = initialvalue + 1
-			pub.publish(msg)
-			rate.sleep()
-			# spin() simply keeps python from exiting until this node is stopped
-			#rospy.spin()
+
+			#rate.sleep()
+
 
 if __name__ == '__main__':
 	try:

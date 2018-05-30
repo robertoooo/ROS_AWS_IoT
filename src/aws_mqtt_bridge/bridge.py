@@ -32,7 +32,7 @@ class RosToAwsBridge(Bridge):
     def _callback_ros(self, msg):
         rospy.logdebug(rospy.get_caller_id() + " Publish to the AWS IoT topic '%s' with the payload '%s'" % (msg.topic, msg.payload))
         # Publish to AWS IoT
-        self._aws_mqtt_client.publish(msg.topic, msg.payload, 1)
+        self._aws_mqtt_client.publish(msg.topic, msg.payload, 0) #(topic, payload, QoS=0 or 1) 0 for no qos
 
     def on_shutdown(self):
         rospy.logdebug("shutdown RosToAwsBridge...")
@@ -44,9 +44,9 @@ class AwsToRosBridge(Bridge):
         self._topic_from = topic_from
         self._topic_to = topic_to
         # Subscribe to AWS IoT
-        self._aws_mqtt_client.subscribe(topic_from, 1, self._callback_aws_iot)
+        self._aws_mqtt_client.subscribe(topic_from, 0, self._callback_aws_iot)
         rospy.loginfo(rospy.get_caller_id() + " Subscribe to the topic %s", topic_from)
-        self._publisher = rospy.Publisher(self._topic_to, self._msg_type_obj, queue_size=10)
+        self._publisher = rospy.Publisher(self._topic_to, self._msg_type_obj, queue_size=1) #ros queue 1 for only one. 0:Infinite
 
     def _callback_aws_iot(self, client, userdata, message):
         rospy.logdebug("Received a MQTT message: topic is '%s', and payload is '%s'" % (message.topic, message.payload))
